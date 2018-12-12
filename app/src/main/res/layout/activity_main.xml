@@ -121,35 +121,35 @@
             android:text="关闭并再次开启后，需要再次手动点‘发送’才能以此为起点开始自动发收短信"
             android:textSize="15sp"
             android:textColor="#be6161"/>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"/>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="程序退出后，大部分手机在不关机的情况下会在29小时后再次发送短信并获得密码，因为闪讯密码周期为28小时，过期也会多出一定时间是可用的，但部分手机在程序被退出后可能无法实现自动发送的功能，但仍然可以点击发送即可获得密码显示"
-            android:textSize="15sp"
-            android:textColor="#73eac2"/>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"/>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="单人开发，功能简单，bug也有，不喜勿喷"
-            android:textSize="15sp"
-            android:textColor="#c2717896"/>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"/>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="目前还没有别的功能"
-            android:textSize="15sp"
-            android:textColor="#9e9999"/>
+        <!--<TextView-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="0dp"-->
+            <!--android:layout_weight="1"/>-->
+        <!--<TextView-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text=""-->
+            <!--android:textSize="15sp"-->
+            <!--android:textColor="#73eac2"/>-->
+        <!--<TextView-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="0dp"-->
+            <!--android:layout_weight="1"/>-->
+        <!--<TextView-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text=""-->
+            <!--android:textSize="15sp"-->
+            <!--android:textColor="#c2717896"/>-->
+        <!--<TextView-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="0dp"-->
+            <!--android:layout_weight="1"/>-->
+        <!--<TextView-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text=""-->
+            <!--android:textSize="15sp"-->
+            <!--android:textColor="#9e9999"/>-->
     </LinearLayout>
 </android.support.v4.widget.DrawerLayout>

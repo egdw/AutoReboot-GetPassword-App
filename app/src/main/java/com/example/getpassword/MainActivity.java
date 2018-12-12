@@ -6,13 +6,11 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
@@ -24,6 +22,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.telephony.SmsManager;
@@ -33,17 +32,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.getpassword.service.MonitorService;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -53,7 +49,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button send;
     private Button read;
     private Button get;
-    private Intent serviceIntent;
     //    private Button cancelButton,continueButton;
     private Switch mSwitch;
     public TextView tv;
@@ -196,7 +191,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-
     //显示通知的通用函数组件
     private NotificationManager getNotificationManager() {
         return (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -220,23 +214,49 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.send:
 //                doSendSMSTO(destinationAddress, "mm");
-
 //                sendMessage(destinationAddress,MESSAGE);//发送短信
                 Intent intent = new Intent(MainActivity.this, sendMessageService.class);
                 startService(intent);
                 break;
             case R.id.read:
-                getSmsFromPhone();
+                openLoginDisplay();
                 break;
             case R.id.get:
                 showText();
-                startService(serviceIntent);
                 break;
             default:
                 break;
         }
 
     }
+
+
+    private void openLoginDisplay() {
+        SharedPreferences data = getSharedPreferences("data", MODE_MULTI_PROCESS);
+        final SharedPreferences.Editor editor = data.edit();
+        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        View view = getLayoutInflater().inflate(R.layout.login_layout, null);
+        builder.setView(view);
+        final AlertDialog dialog = builder.show();
+        final EditText SCKEY_input = (EditText) view.findViewById(R.id.sckey_input);
+        SCKEY_input.setText(data.getString("SCKEY", ""));
+        final Switch aSwitch = (Switch) view.findViewById(R.id.server_open);
+        aSwitch.setChecked(data.getBoolean("server_open", true));
+        Button button = (Button) view.findViewById(R.id.login_button);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String trim = SCKEY_input.getText().toString().trim();
+                boolean checked = aSwitch.isChecked();
+//                "https://api.myjson.com/bins/15u89e"
+                editor.putString("SCKEY", trim);
+                editor.putBoolean("server_open", checked);
+                editor.commit();
+                dialog.dismiss();
+            }
+        });
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -270,35 +290,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return true;
     }
 
-
-    public void getSmsFromPhone() {
-        ContentResolver cr = getContentResolver();
-        String[] projection = new String[]{"body"};//"_id", "address", "person",, "date", "type
-        String where = "address = '106593005'";
-//        String where = " address = '10086' " ;
-        Cursor cur = cr.query(SMS_INBOX, projection, null, null, "date desc");
-//        showToast(""+cur.toString());
-        //此处读取内容指定为 where 失败了， cur.query第三个 selection 参数指定为where  读取不到不会返回null。。。
-        if (null == cur) {
-            showToast("mei");
-            tv.setText("没有收到过来自" + destinationAddress + "的短信！");
-            return;
-        }
-        if (cur.moveToNext()) { // cur初始是-1 moveToNext后为0 另外 moveToFirst也是0 代表数据库第一行
-// int number = cur.getInt(cur.getColumnIndex("address"));//手机号
-// String name = cur.getString(cur.getColumnIndex("person"));//联系人姓名列表
-            String body = cur.getString(cur.getColumnIndex("body"));
-            Log.d(TAG, "getSmsFromPhone: " + body);
-            tv.setText(body);
-//这里我是要获取自己短信服务号码中的验证码~~
-            Pattern pattern = Pattern.compile(" [a-zA-Z0-9]{10}");
-            Matcher matcher = pattern.matcher(body);
-            if (matcher.find()) {
-                String res = matcher.group().substring(1, 11);
-                Log.d(TAG, "getSmsFromPhoneContent: " + res);
-            }
-        }
-    }
 
     public void askPermissions() {
         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.SEND_SMS) !=

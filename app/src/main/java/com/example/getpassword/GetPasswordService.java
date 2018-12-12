@@ -89,18 +89,18 @@ public class GetPasswordService extends IntentService {
                 sendIntent.setAction(MainActivity.letPasswordBroadcast);//这里广播的 action 一定要记住，不要搞混了
                 sendIntent.putExtra("password", send);
                 sendIntent.putExtra("time", time);
-
-                if (send != null && time != null) {
+                final SharedPreferences data = getSharedPreferences("data", Context.MODE_MULTI_PROCESS);
+                boolean server_open = data.getBoolean("server_open", true);
+                if (send != null && time != null && server_open) {
                     //说明解析出来的数据是正确的.
                     //提交到mjson.com进行修改请求操作
                     //创建okHttpClient对象
                     OkHttpClient mOkHttpClient = new OkHttpClient();
                     //创建一个Request
                     //这里需要进行修改.
-                    final SharedPreferences data = getSharedPreferences("data", Context.MODE_MULTI_PROCESS);
-                    RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), JSON.toJSONString(new Password(password, mytime)));
+                    RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), JSON.toJSONString(new Password(mytime, password)));
                     final Request request = new Request.Builder()
-                            .url("https://api.myjson.com/bins/15u89e")
+                            .url(data.getString("SCKEY", ""))
                             .put(body)
                             .build();
                     //new call
