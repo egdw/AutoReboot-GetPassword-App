@@ -2,8 +2,6 @@ package com.example.getpassword;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -11,13 +9,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -39,55 +33,36 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     public static final String letPasswordBroadcast = "action.getPasswordBroadcast";//让密码广播！
-    public static final String rebootBroadcast = "action.rebootActivity";
 
     private Button send;
     private Button read;
     private Button get;
-    //    private Button cancelButton,continueButton;
     private Switch mSwitch;
     public TextView tv;
 
     private String TAG = "MainActivity";
-    //final String SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
 
     public static final String destinationAddress = "106593005";
     public static final String MESSAGE = "mm";
-    //    public static final String destinationAddress ="10086";
-    // public static final String MESSAGE ="查询余额";
     private final String SENT_SMS_ACTION = "SENT_SMS_ACTION";
     private final String DELIVERED_SMS_ACTION = "DELIVERED_SMS_ACTION";
 
     private sendReceiver mSendReceiver;//有没有发送成功
     private oppositeReceiver mOppositeReceiver;//对方有没有接收到
     private myReceiver mMyReceiver;
-    //private rebootReceiver mRebootReceiver;//改静态注册
-
-    //private IncomingSMSReceiver incomingSMSReceiver;//收到选短信的广播接收器
 
     private static PendingIntent sentPI, deliverPI;//,receiverPI;
 
     private List<String> permissionList;
 
-    private Uri SMS_INBOX = Uri.parse("content://sms/");
-
     private DrawerLayout mDrawerLayout;
-
-    private static final String ACTION_NOTIFICATION_LISTENER_SETTINGS = "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS";
-
-    private void openNotificationAccess() {
-        startActivity(new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS));
-    }
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "weimeng MainActivity onCreate: 主界面创建 ");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -95,32 +70,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
         if (null != actionBar) {
-//            actionBar.hide();//不隐藏了
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setHomeAsUpIndicator(R.drawable.ic_menu);
         }
-//        if (!isNotificationListenerServiceEnabled(this)) {
-//            Toast.makeText(this, "请先勾选手机监听器的读取通知栏权限!", Toast.LENGTH_LONG).show();
-//            openNotificationAccess();
-//            return;
-//        }
-//        if (serviceIntent == null) {
-//            serviceIntent = new Intent(MainActivity.this, MonitorService.class);
-//            serviceIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//            startService(serviceIntent);
-//            Log.i("监听服务启动","启动完成呢过");
-//        }
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        send = (Button) findViewById(R.id.send);
-        read = (Button) findViewById(R.id.read);
-        get = (Button) findViewById(R.id.get);
-        tv = (TextView) findViewById(R.id.tv);
-        mSwitch = (Switch) findViewById(R.id.switchToSend);
+        mDrawerLayout = findViewById(R.id.drawer_layout);
+        send = findViewById(R.id.send);
+        read = findViewById(R.id.read);
+        get = findViewById(R.id.get);
+        tv = findViewById(R.id.tv);
+        mSwitch = findViewById(R.id.switchToSend);
         send.setOnClickListener(this);
         read.setOnClickListener(this);
         get.setOnClickListener(this);
-//        cancelButton.setOnClickListener(this);
-//        continueButton.setOnClickListener(this);
         //注册发送短信的状态 的广播接收器
 
         Intent sentIntent = new Intent(SENT_SMS_ACTION);
@@ -133,32 +94,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mOppositeReceiver = new oppositeReceiver();
         registerReceiver(mOppositeReceiver, new IntentFilter(DELIVERED_SMS_ACTION));
         //注册incomingSMSReceiver
-        //Intent incomingIntent = new Intent(SMS_RECEIVED);
-        //receiverPI = PendingIntent.getBroadcast(this,0,incomingIntent,0);
-
-        //incomingSMSReceiver = new IncomingSMSReceiver();
-        //registerReceiver(incomingSMSReceiver,new IntentFilter(SMS_RECEIVED));
-        //弃用动态注册的广播接收器，使用静态注册，因为要求产品在后台可以接收到广播
-
-//        IntentFilter filter = new IntentFilter(SMS_RECEIVED);
-//
-//        BroadcastReceiver receiver = new IncomingSMSReceiver();
-//        registerReceiver(receiver,filter);
         mMyReceiver = new myReceiver();//用于接受返回的密码等内容
         registerReceiver(mMyReceiver, new IntentFilter(letPasswordBroadcast));
 
-        //mRebootReceiver = new rebootReceiver();
-        //registerReceiver(mRebootReceiver,new IntentFilter(rebootBroadcast));
         //权限表
         permissionList = new ArrayList<>();
-
         askPermissions();//        运行时权限 (动态权限申请)
         if (!permissionList.isEmpty()) {
             String[] permissions = permissionList.toArray(new String[permissionList.size()]);//list-->String
             ActivityCompat.requestPermissions(MainActivity.this, permissions, 1);
         }
 
-        //rebootBroadcastReceiver 会发来Intent
         Intent rebootIntent = getIntent();
         String name = rebootIntent.getStringExtra("name");
         if (name != null && name.equals("rebootIntent")) {//短路机制，前一个条件不满足自动跳过if
@@ -171,52 +117,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {//switch 改变时记录状态
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                SharedPreferences.Editor editor = getSharedPreferences("data", MODE_PRIVATE).edit();
+                SharedPreferences.Editor editor = getSharedPreferences("data", MODE_MULTI_PROCESS).edit();
                 editor.putBoolean("ContinueSend", isChecked);//存储选中的状态。
                 editor.apply();//这句又忘了。。牢记牢记
                 Log.d(TAG, "weimeng 保存状态continueSend=" + isChecked);
             }
         });
 
-        SharedPreferences pref = getSharedPreferences("data", MODE_PRIVATE);
+        SharedPreferences pref = getSharedPreferences("data", MODE_MULTI_PROCESS);
         boolean flag = pref.getBoolean("ContinueSend", true);//默认重复发送
         //为了保存switch的状态
         mSwitch.setChecked(flag);
-        //之后在sendMessageService里取出 data文件里的数据值赋给 continueSend;
 
         //显示之前保存的密码和那个时间
         showText();
-
-
     }
 
-
-    //显示通知的通用函数组件
-    private NotificationManager getNotificationManager() {
-        return (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-    }
-
-    private Notification getNotification(String title, String content) {
-        Intent intent = new Intent(this, MainActivity.class);
-        PendingIntent pi = PendingIntent.getActivity(this, 0, intent, 0);
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setSmallIcon(R.mipmap.ic_launcher);
-        builder.setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher));
-        builder.setContentIntent(pi);
-        builder.setContentTitle(title);
-        builder.setContentText(content);
-        return builder.build();
-
-    }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.send:
-//                doSendSMSTO(destinationAddress, "mm");
-//                sendMessage(destinationAddress,MESSAGE);//发送短信
                 Intent intent = new Intent(MainActivity.this, sendMessageService.class);
                 startService(intent);
+                showToast("发送中..");
                 break;
             case R.id.read:
                 openLoginDisplay();
@@ -238,11 +162,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         View view = getLayoutInflater().inflate(R.layout.login_layout, null);
         builder.setView(view);
         final AlertDialog dialog = builder.show();
-        final EditText SCKEY_input = (EditText) view.findViewById(R.id.sckey_input);
+        final EditText SCKEY_input =  view.findViewById(R.id.sckey_input);
         SCKEY_input.setText(data.getString("SCKEY", ""));
-        final Switch aSwitch = (Switch) view.findViewById(R.id.server_open);
+        final Switch aSwitch = view.findViewById(R.id.server_open);
         aSwitch.setChecked(data.getBoolean("server_open", true));
-        Button button = (Button) view.findViewById(R.id.login_button);
+        Button button = view.findViewById(R.id.login_button);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -260,7 +184,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        SharedPreferences.Editor editor = getSharedPreferences("data", MODE_PRIVATE).edit();
+        SharedPreferences.Editor editor = getSharedPreferences("data", MODE_MULTI_PROCESS).edit();
 
 
         switch (item.getItemId()) {
@@ -296,15 +220,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 PackageManager.PERMISSION_GRANTED) {
             permissionList.add(Manifest.permission.SEND_SMS);
         }
-        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_SMS) !=
-                PackageManager.PERMISSION_GRANTED) {
-            permissionList.add(Manifest.permission.READ_SMS);
-        }
         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECEIVE_SMS) !=
                 PackageManager.PERMISSION_GRANTED) {
             permissionList.add(Manifest.permission.RECEIVE_SMS);
         }
-        //多的同样加进去
     }
 
     @Override
@@ -380,30 +299,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         public void onReceive(Context context, Intent intent) {
             String password = intent.getStringExtra("password");
             String time = intent.getStringExtra("time");
-            SharedPreferences.Editor editor = getSharedPreferences("data", MODE_PRIVATE).edit();
+            SharedPreferences.Editor editor = getSharedPreferences("data", MODE_MULTI_PROCESS).edit();
             editor.putString("password", password);
             editor.putString("time", time);
             editor.apply();
             showText();
-            getNotificationManager().notify(1, getNotification("闪讯助手密码更新", "password:" + password));
         }
     }
 
 
     private void showText() {
-        SharedPreferences pref = getSharedPreferences("data", MODE_PRIVATE);
+        SharedPreferences pref = getSharedPreferences("data", MODE_MULTI_PROCESS);
         String password = pref.getString("password", "没有获取过");
         String time = pref.getString("time", "没有获取过");
         tv.setText("密码: " + password + "\n上次更新时间：" + time);
     }
-    /* //思路图里改静态注册一个接收器
-    class rebootReceiver extends BroadcastReceiver{
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "weimeng 收到rebootReceiver要发送短信了");
-            sendMessage(destinationAddress,MESSAGE);
-        }
-    }*/
 
 
     @Override
@@ -414,13 +324,4 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //取消注册
         super.onDestroy();
     }
-
-    private static boolean isNotificationListenerServiceEnabled(Context context) {
-        Set<String> packageNames = NotificationManagerCompat.getEnabledListenerPackages(context);
-        if (packageNames.contains(context.getPackageName())) {
-            return true;
-        }
-        return false;
-    }
-
 }

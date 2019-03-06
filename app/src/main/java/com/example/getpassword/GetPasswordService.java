@@ -1,6 +1,8 @@
 package com.example.getpassword;
 
+import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,8 +18,11 @@ import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 
 public class GetPasswordService extends IntentService {
     private static final String ACTION_FOO = "com.example.getpassword.action.FOO";
@@ -75,7 +80,7 @@ public class GetPasswordService extends IntentService {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                String regEx = "[0-9]{6}";//10086
+                String regEx = "[0-9]{6}";
                 Pattern pattern = Pattern.compile(regEx);
                 Matcher matcher = pattern.matcher(body);
                 final String send;
@@ -103,7 +108,6 @@ public class GetPasswordService extends IntentService {
                             .url(data.getString("SCKEY", ""))
                             .put(body)
                             .build();
-                    //new call
                     Call call = mOkHttpClient.newCall(request);
                     //请求加入调度
                     call.enqueue(new Callback() {
@@ -124,10 +128,23 @@ public class GetPasswordService extends IntentService {
                     });
                 }
 
-
-                //1 包名 2 接收器类名
-//            sendIntent.setComponent(new ComponentName("com.example.getpassword",
-//                        "com.example.getpassword.MainActivity.myReceiver"));//android8.0要设置的
+                AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                //默认的时间
+                int aDayMore = 29 * 60 * 60 * 1000;//一天又多个小时
+                long triggerAtTime = System.currentTimeMillis() + aDayMore;
+                //到点自动更新闪讯密码
+//                            String update_time = data.getString("next_update_time", String.valueOf(new Date(System.currentTimeMillis() + triggerAtTime)));
+                Log.i("获取到的更新时间", mytime);
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                triggerAtTime = 0;
+                try {
+                    triggerAtTime = format.parse(mytime).getTime() + (60 * 1000 * 5);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                Intent i = new Intent(GetPasswordService.this.getApplicationContext(), sendMessageService.class);//这里搞错了，弄了两天
+                PendingIntent pi = PendingIntent.getService(GetPasswordService.this.getApplicationContext(), 0, i, 0);
+                manager.set(AlarmManager.RTC_WAKEUP, triggerAtTime, pi);
                 sendBroadcast(sendIntent);//轮了一圈再发回 MainActivity
             }
         }).start();
